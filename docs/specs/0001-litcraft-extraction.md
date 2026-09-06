@@ -1,223 +1,322 @@
-# Spec 0001: Extract Litcraft into Writing Engine
+# Spec 0001: Minimal shared Litcraft
 
 ## Status
 
-Ready for ticketing after consumer compatibility details are verified against AutoEssay's default integration branch.
+Audited against AutoEssay's default integration branch (`feat/init-core-engine`) and ready for ticketing.
 
 ## Goal
 
-Move the genuinely shared Litcraft semantics out of AutoEssay into Writing Engine without changing AutoEssay behavior, while creating a clean seam that AutoFiction can consume without inheriting essay-domain types.
+Establish the smallest shared Litcraft foundation in Writing Engine that both AutoEssay and AutoFiction can use without either product leaking its domain model into the engine.
 
-## Non-goals
+The first implementation is deliberately smaller than AutoEssay's current integrated Literacraft path. It extracts only semantics already proven useful across essay and fiction: observable style mechanisms, grounded observations, longitudinal author practice, transformation traces and structured evaluated style effects.
 
-This spec does not:
+## Audit findings
 
-- move `ContentStyleArticulation` out of AutoEssay;
-- implement AutoFiction's `NarrativeStyleArticulation`, `NarrativeStyleState` or `BookStyleContract`;
-- extract Diffract yet;
-- introduce a graph database, vector store or new persistence layer;
-- create a global style preset or author-imitation prompt;
-- redesign AutoEssay's current editorial workflow during extraction.
+The AutoEssay implementation proves the following behavior:
 
-## Source behavior to preserve
+1. a style observation must connect a situated content configuration, a concrete formal operation, an observed effect and textual evidence;
+2. an isolated adjective is not a valid stylistic operation;
+3. one observation remains a `single_observation` unless stronger evidence explicitly promotes it;
+4. `AuthorStyleConstellation` is derived, longitudinal and non-executable;
+5. a writer transformation trace records an attempted operation and is not proof that the effect succeeded;
+6. an independent evaluator distinguishes absent, ineffective, partially effective, effective and harmful effects and grounds non-absent findings in text;
+7. AutoEssay's documentary gate remains independent from editorial/style success.
 
-AutoEssay's current Litcraft integration establishes these invariants:
+The audit also shows that AutoEssay's current `StyleObservation` is not directly portable: its `contentConfiguration` imports essay-only `ClaimType` and `SourceRegime`, and `ObservationAnalyzer` renders those exact essay fields in its model prompt.
 
-1. style is represented through observable mechanisms and evidence, not adjective-only labels;
-2. an `AuthorStyleConstellation` is derived and non-executable;
-3. a proposed stylistic operation cannot become executable until product/author governance validates the surrounding decision;
-4. writer transformation traces are declarations of attempted operations, not proof of success;
-5. an independent evaluator inspects produced text for actual content/form effects and textual evidence;
-6. product-specific documentary/editorial gates remain separate from style-effect evaluation.
+Therefore Writing Engine must not copy AutoEssay's Litcraft folder wholesale.
 
-The migration must keep these behaviors intact.
+## Ponytail challenge
+
+The initial design proposed extracting analyzers, evaluators and a configurable context seam at once. That is more machinery than the shared engine currently needs.
+
+The minimal foundation therefore does **not** extract:
+
+- `ObservationAnalyzer`;
+- `EditorialEffectEvaluator` or any model prompt;
+- provider/retry policy;
+- `ContentStyleArticulation`;
+- writer/evaluator/revision projection compilers;
+- product evaluation gates;
+- persistence or registries;
+- a plugin/factory framework for consumer-specific schemas.
+
+Products may keep those services while consuming the shared pure contracts.
 
 ## Shared module boundary
 
-Initial logical module:
+One logical module is sufficient:
 
 ```text
-writing-engine/
-  litcraft/
-    style-operation
-    style-observation
-    author-style-constellation
-    transformation-trace
-    style-effect-evaluation
+src/litcraft/
+  index.ts
 ```
 
-Physical package boundaries are deferred until implementation demonstrates that separate packages add value. A single package/module is preferred initially.
+Do not split it into packages or service layers until a concrete change becomes difficult without that split.
 
-## Shared contracts
+## Shared primitives
 
-### Stylistic operation vocabulary
+### Generic references
 
-Writing Engine owns the domain-neutral operation vocabulary and target semantics needed by both consumers, including voice, distance, syntax, rhythm, tempo, lexicon, figuration, fragmentation, ambiguity, silence and related observable mechanisms.
+Litcraft reuses Writing Engine's existing domain-neutral reference contract from Diffract:
 
-Consumer-only categories may be added by consumer extension rather than forcing every product term into the shared enum.
+```ts
+{ kind: string; id: string }
+```
 
-### Style observation
+Do not introduce a second generic identifier abstraction.
 
-A shared style observation must contain:
+### StyleSituation
+
+A style observation needs structured situation data without knowing the product domain.
+
+Use a small signal list:
+
+```ts
+interface StyleSignal {
+  kind: string;
+  value: string;
+}
+
+interface StyleSituation {
+  signals: StyleSignal[];
+  refs?: DiffractiveReference[];
+}
+```
+
+At least one signal is required.
+
+Examples:
+
+```text
+AutoEssay
+argumentative_function = maintain a documentary contradiction
+claim_type = interpretation
+source_regime = testimony
+relation = incompatible chronologies
+
+AutoFiction
+scene_function = rupture
+arc_pressure = trust collapses
+reader_state = narrator reliability becomes uncertain
+```
+
+The product owns the vocabulary of `kind`. Writing Engine only requires non-empty kinds and values.
+
+### StylisticOperation
+
+A shared operation represents an observable mechanism rather than a style label.
+
+Keep the five proven operation families:
+
+- `enunciation_structure`
+- `syntax_rhythm_musicality`
+- `tone_lexicon`
+- `figuration_genre`
+- `creative_imperfection`
+
+The shared `category` and `target` are non-empty strings rather than closed engine enums. Consumers may validate narrower vocabularies themselves. This avoids a cross-product extension framework.
+
+An observed operation contains:
+
+- family;
+- category;
+- trigger;
+- operation;
+- target;
+- observed effect;
+- intensity (`subtle | moderate | structuring`).
+
+A planned operation contains the same stable mechanism vocabulary plus rationale instead of claiming an observed effect.
+
+### StyleEffect
+
+Represent effects as structured statements rather than a closed essay-specific object:
+
+```ts
+interface StyleEffect {
+  kind: string;
+  statement: string;
+}
+```
+
+Examples of `kind` include `argumentative`, `epistemic`, `emotional`, `reception`, `narrative`, `perceptual`, `rhythmic` and `reader`.
+
+Writing Engine does not own that vocabulary.
+
+### Text evidence
+
+A reusable evidence value contains:
+
+- optional exact excerpt;
+- optional text location label;
+- optional start/end offsets.
+
+It requires either an excerpt or a location. If offsets are supplied, both are required and `end > start`.
+
+Grounding an excerpt against actual manuscript text remains a consumer/service responsibility because the shared pure contract does not own the manuscript.
+
+### StyleObservation
+
+A shared observation contains:
 
 - stable id;
 - author id;
 - source text id;
-- situated context supplied without product-domain imports;
-- one or more observable formal operations;
-- one or more observed effects;
-- exact excerpt and/or text location;
+- `StyleSituation`;
+- one or more observed stylistic operations;
+- one or more `StyleEffect` values;
+- text evidence;
 - provenance;
-- confidence;
-- maturity.
+- confidence (`low | medium | high`);
+- maturity (`single_observation | recurring_pattern | validated_practice`);
+- creation time.
 
-The shared contract must not import `ClaimType`, `SourceRegime`, `NarrativeArc` or `ReaderModel`.
-
-#### Context seam
-
-The implementation should use the smallest context seam that preserves useful provenance. Preferred direction:
-
-```ts
-interface StyleObservationContext {
-  summary?: string;
-  tags?: string[];
-  refs?: Array<{
-    kind: string;
-    id: string;
-  }>;
-}
-```
-
-AutoEssay can adapt claims, source regimes, relations, tensions and concepts into this seam while retaining its richer canonical data in AutoEssay. AutoFiction can adapt arcs, threads, scene functions and reader-state references similarly.
-
-Do not make the shared engine the canonical store of either product's domain context.
+Default maturity is `single_observation`.
 
 ### AuthorStyleConstellation
 
-Preserve these properties:
+Preserve the proven AutoEssay semantics:
 
-- derived from observations and explicit declarations;
-- longitudinal rather than single-passage authority;
-- explicit validated signatures, productive tensions and unwanted drifts;
-- ethical boundary that preserves mechanisms rather than surface wording and forbids verbatim reuse;
-- never executable directly by a writer or projection compiler.
+- derive only from observations belonging to the requested author;
+- group observed practices by operation family/category;
+- keep the weakest confidence in a grouped practice;
+- aggregate operations, triggers and effects without duplicates;
+- preserve explicit author declarations;
+- keep validated signatures, productive tensions and unwanted drifts explicit;
+- enforce the ethical boundary `preserveMechanismsNotSurface = true` and `forbiddenVerbatimReuse = true`;
+- never expose generation directives or become executable by a writer.
 
-### Planned stylistic operation
+### TransformationTrace
 
-The shared contract describes a concrete operation, target, rationale and intensity. Products decide why it is appropriate and how it participates in their own decision objects.
+A shared trace records an attempted operation:
 
-### Transformation trace
-
-The shared trace links:
-
-- unit/version;
-- execution/projection reference;
-- directive/decision reference when supplied by the consumer;
+- stable id;
+- unit reference and version;
+- operation reference;
+- optional additional provenance references such as a consumer decision/projection;
 - declaration;
-- exact text location;
-- timestamp/provenance.
+- text evidence/location;
+- status `declared`;
+- creation time.
 
-A trace status means only that an operation was declared/attempted.
+A trace is not evidence that the intended effect succeeded.
 
-### Style-effect evaluation
+### EvaluatedStyleEffect
 
-Split the reusable effect-evaluation semantics from AutoEssay's `IntegratedEvaluation` composition.
+The first shared evaluation artifact is a **result contract**, not an evaluator service.
 
-The shared evaluation must support:
+It contains:
 
-- `absent`;
-- `present_ineffective`;
-- `partially_effective`;
-- `effective`;
-- `harmful`;
-- findings about produced form/content;
-- textual evidence;
+- stable id;
+- scope reference;
+- optional operation reference;
+- optional trace references;
+- status `absent | present_ineffective | partially_effective | effective | harmful`;
+- intended effects;
+- observed effects;
 - unintended effects;
-- repair suggestion when not effective;
-- provenance to the evaluated unit/version and expected operation/criterion.
+- textual evidence;
+- optional repair suggestion;
+- evaluation timestamp and evaluator provenance.
 
-AutoEssay retains its documentary integrity gate and final essay verdict composition.
+Rules:
 
-## AutoEssay adapter
+- any status other than `absent` requires textual evidence;
+- any status other than `effective` requires a repair suggestion;
+- `absent` may have no evidence;
+- product-specific scores and gates stay in the product.
 
-AutoEssay remains responsible for translating its richer essay context into the shared Litcraft seam.
+This captures the common signal without moving AutoEssay's `contentScore`, `formScore`, documentary integrity gate or final essay verdict into Writing Engine.
 
-Expected mapping includes:
+## Diffract integration
+
+Diffract is already present in Writing Engine. Litcraft must expose a minimal projection from `EvaluatedStyleEffect` to a Diffract `ContextBlock`.
+
+The projection must:
+
+- use a `style-effect` generic reference;
+- include status, intended, observed and unintended effects in bounded text;
+- preserve the effect identifier;
+- never trigger a Diffract read or mutate state by itself.
+
+This enables the proven loop:
 
 ```text
-ClaimType / SourceRegime / ContentRelation / tensions / concepts
-    -> AutoEssay-owned situated context
-    -> shared StyleObservation refs/tags/summary
+writer
+  -> TransformationTrace
+  -> consumer evaluation
+  -> EvaluatedStyleEffect
+  -> Diffract ContextBlock
+  -> post-Diffract reading
+  -> product/author decision
 ```
 
-`ContentStyleArticulation`, `EditorialDecision`, `EditorialPlan` and essay projections remain AutoEssay-owned unless a later two-consumer analysis proves identical semantics.
+## AutoEssay compatibility
 
-## AutoFiction consumption
+AutoEssay keeps its current product-facing representation and services during the first Writing Engine implementation.
 
-AutoFiction may consume the shared Litcraft contracts directly, but owns its narrative articulation and persistent style state.
-
-Expected mapping includes:
+A later AutoEssay adapter may map:
 
 ```text
-NarrativeArc / StoryThread / scene function / ReaderModel
-    -> AutoFiction-owned situated context
-    -> shared StyleObservation refs/tags/summary
+argumentativeFunction -> StyleSignal(kind="argumentative_function")
+claimTypes            -> StyleSignal(kind="claim_type")
+sourceRegimes         -> StyleSignal(kind="source_regime")
+relations             -> StyleSignal(kind="relation")
+tensions              -> StyleSignal(kind="tension")
+concepts              -> StyleSignal(kind="concept")
 ```
 
-A local stylistic variation does not automatically update `NarrativeStyleState`. A persistent transition requires AutoFiction governance and commit rules.
+and map its effect arrays to `StyleEffect` values by kind.
 
-## Diffract integration contract
+The adapter is not part of the minimal Writing Engine foundation. AutoEssay remains authoritative until compatibility tests prove the mapping and dependency mechanism.
 
-Litcraft must expose evaluated style effects in a structured form usable by a future shared Diffract core.
+## AutoFiction compatibility
 
-Minimum downstream signal:
+AutoFiction can use the same shared primitives while owning:
 
-```ts
-interface EvaluatedStyleEffect {
-  scopeRef: string;
-  operationRef?: string;
-  status:
-    | "absent"
-    | "present_ineffective"
-    | "partially_effective"
-    | "effective"
-    | "harmful";
-  intendedEffects: string[];
-  observedEffects: string[];
-  unintendedEffects: string[];
-  evidence: Array<{ excerpt: string }>;
-}
-```
+- `BookStyleContract`;
+- `NarrativeStyleState`;
+- `NarrativeStyleArticulation`;
+- local versus persistent transition rules;
+- narrative/reader-specific judges and commit rules.
 
-This is decision input only. Writing Engine does not decide whether a product's style state changes.
+No shared Litcraft object may update `NarrativeStyleState` directly.
 
-## Migration sequence
+## Implementation slices
 
-1. Add shared Litcraft contracts and tests in Writing Engine.
-2. Add AutoEssay adapters while its existing implementation remains authoritative.
-3. Run compatibility tests against representative AutoEssay Litcraft flows.
-4. Switch AutoEssay imports to Writing Engine with no behavior change.
-5. Remove or tombstone duplicated shared implementation only after parity is established.
-6. Consume the shared module from AutoFiction.
-7. Use the two consumers to refine extension seams only where real divergence appears.
-8. Start Diffract-core extraction as a separate spec.
+The minimal foundation should land as three independently verifiable tracer bullets:
 
-## Compatibility requirements
+1. observe one situated style mechanism with grounded evidence;
+2. derive a non-executable longitudinal author constellation;
+3. record/evaluate a transformation result and project it into Diffract context.
 
-- Existing AutoEssay persisted data must not be silently reinterpreted.
-- No automatic converter may legitimize legacy global style-profile conclusions that bypass provenance.
-- Stable identifiers/provenance used by evaluations and traces must remain resolvable across the migration.
-- Consumer-specific evaluation gates and commit rules must remain unchanged during the extraction phase.
+The second and third slices may proceed independently once the first shared observation vocabulary exists.
+
+## Deferred migration
+
+After the minimal foundation is stable:
+
+1. decide the smallest cross-repository dependency mechanism;
+2. build an AutoEssay compatibility adapter;
+3. run AutoEssay's existing Litcraft tests and demonstrators against that adapter;
+4. switch shared semantics only after parity;
+5. consume the same primitives from AutoFiction;
+6. remove duplicated product implementation only when no caller remains.
 
 ## Acceptance criteria
 
-- Writing Engine contains no import from AutoEssay or AutoFiction domain packages.
-- Shared Litcraft tests cover observation evidence/provenance, constellation derivation, non-executability, trace validation and effect-evaluation evidence requirements.
-- AutoEssay passes its existing Litcraft tests and demonstrators after switching to the shared module.
-- AutoEssay's `ContentStyleArticulation` still belongs to AutoEssay.
-- AutoFiction can represent a style observation and evaluated style effect using Writing Engine without depending on AutoEssay.
-- An evaluated unintended style effect can be passed as structured input to a later diffractive reader without parsing free-form writer logs.
+- Writing Engine contains no import from AutoEssay or AutoFiction.
+- The Litcraft foundation contains no model-provider dependency.
+- A valid observation cannot be reduced to a style adjective because trigger, mechanism, effect and evidence are required.
+- A single observation does not become an author signature automatically.
+- `AuthorStyleConstellation` is longitudinal and non-executable.
+- A transformation trace remains a declaration, not proof.
+- An evaluated non-absent style effect requires evidence.
+- An evaluated non-effective style effect requires a repair suggestion.
+- An `EvaluatedStyleEffect` can become a Diffract `ContextBlock` without parsing free-form writer logs.
+- No Litcraft artifact mutates product state.
 
 ## Ponytail check
 
-The extraction should prefer one shared Litcraft module and thin consumer adapters. Do not introduce a plugin framework, event bus, database, registry service or generic workflow engine unless a concrete consumer requirement proves it necessary.
+One module, reused generic references, plain Zod contracts and pure functions. No schema factory, plugin system, event bus, registry, persistence layer, analyzer service or evaluator service in this phase.
