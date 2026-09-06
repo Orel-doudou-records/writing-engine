@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted as architectural direction; extraction follows Litcraft migration.
+Accepted. The minimal domain-neutral core may be established before Litcraft migration; full style-effect integration follows Litcraft's shared seam.
 
 ## Context
 
@@ -14,20 +14,24 @@ A raw `text_changed` signal cannot express what an evaluated stylistic transform
 
 ## Decision
 
-Writing Engine will own a domain-neutral Diffract core only after Litcraft's shared seam is stabilized.
+Writing Engine owns a domain-neutral Diffract core.
 
-The shared core may own:
+The first implementation is intentionally minimal and may be established before Litcraft extraction. It owns only:
 
 - pass orchestration;
 - refraction;
+- pattern/default inspection;
 - entanglements;
 - cuts and exclusions;
 - alternative paths and tradeoffs;
 - verdict discipline;
-- generic change/effect references;
-- immutable reading artifacts and provenance.
+- generic references and impacts;
+- immutable reading artifacts;
+- one structured-JSON model-client seam.
 
 Consumers own their context projectors and impact interpretations.
+
+The minimal core must not depend on Litcraft. Once Litcraft exposes shared evaluated style effects, those effects become first-class consumer-projected inputs to post-writing Diffract.
 
 Diffract must support both pre-writing and post-writing use:
 
@@ -42,10 +46,12 @@ Diffract never mutates `StoryState`, `NarrativeArc`, essay plans, style state or
 
 ## Consequences
 
-- AutoEssay may continue to expose plan and bibliography impacts.
-- AutoFiction may expose arc, thread, reader and style impacts.
-- Style-effect evaluation becomes a first-class signal for future diffractive re-reading.
-- Automatic re-reading may add a semantic style-effect trigger rather than relying only on `text_changed`.
+- A minimal Diffract foundation can be tested independently now.
+- AutoEssay may continue to expose plan and bibliography impacts through its own adapter.
+- AutoFiction may expose arc, thread, reader and style impacts through its own adapter.
+- Litcraft extraction is not blocked by Diffract and Diffract is not blocked by Litcraft.
+- Style-effect evaluation becomes a first-class signal for future post-writing diffractive re-reading once the shared Litcraft contract exists.
+- Automatic re-reading may later add a semantic style-effect trigger rather than relying only on `text_changed`.
 - The shared core must not contain claims, citations, arcs, scenes or reader-model types.
 
 ## Rejected alternatives
@@ -53,6 +59,10 @@ Diffract never mutates `StoryState`, `NarrativeArc`, essay plans, style state or
 ### Put AutoEssay's current Diffract implementation wholesale in Writing Engine
 
 Rejected because current inputs and projections still encode essay-specific semantics.
+
+### Wait to define any Diffract core until Litcraft migration is complete
+
+Rejected because the four-pass/cut/verdict discipline and domain-neutral reference seam can be established independently. Waiting would couple two separable migrations without adding safety.
 
 ### Run Diffract only before writing
 

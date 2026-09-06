@@ -4,11 +4,23 @@
 
 - [x] establish shared-engine boundary;
 - [x] pin Matt Skills and Ponytail as engineering guardrails;
-- [x] define Litcraft as the first shared extraction;
-- [x] record Diffract as the second shared extraction;
-- [x] write the initial Litcraft extraction spec.
+- [x] define Litcraft as shared writing infrastructure;
+- [x] record Diffract as a shared domain-neutral decision-reading core;
+- [x] write the initial Litcraft extraction spec;
+- [x] specify the minimal Diffract core.
 
-## Phase 1: Litcraft extraction
+## Phase 1: minimal Diffract foundation
+
+- [x] implement the domain-neutral four-pass/cut/tradeoff discipline;
+- [x] expose generic `{kind,id}` references and consumer-projected context blocks;
+- [x] validate context before reasoning and reject invented impact identifiers after reasoning;
+- [x] keep reading artifacts immutable and non-executable;
+- [x] validate with deterministic fake-client tests and CI;
+- [x] leave AutoEssay and AutoFiction adapters for their owning repositories.
+
+This phase does not require Litcraft and does not implement style-state feedback by itself.
+
+## Phase 2: Litcraft extraction
 
 1. verify current AutoEssay Litcraft contracts and tests on its integration/default implementation branch;
 2. implement the smallest domain-neutral Litcraft module in Writing Engine;
@@ -18,7 +30,7 @@
 6. validate existing AutoEssay demonstrators/evaluations;
 7. consume the same shared primitives from AutoFiction.
 
-## Phase 2: long-form style continuity in AutoFiction
+## Phase 3: long-form style continuity in AutoFiction
 
 Owned by AutoFiction, using shared Litcraft primitives:
 
@@ -30,16 +42,16 @@ Owned by AutoFiction, using shared Litcraft primitives:
 
 These remain outside Writing Engine unless a second consumer later proves identical semantics.
 
-## Phase 3: Diffract core extraction
+## Phase 4: post-writing Diffract integration
 
-After Litcraft is consumed by both products:
+After Litcraft exposes shared style-effect evaluations:
 
-1. isolate the domain-neutral four-pass/cut/tradeoff discipline from AutoEssay;
-2. define generic change/effect inputs;
-3. keep essay and fiction context projectors in their products;
-4. support pre-writing and post-writing diffractive readings;
-5. accept structured Litcraft effect evaluations as post-writing inputs;
-6. preserve author/product governance: readings never mutate consumer state directly.
+1. project evaluated style effects into generic Diffract context blocks;
+2. support post-writing re-diffraction of intended, observed and unintended effects;
+3. keep essay-specific plan/bibliography interpretations in AutoEssay;
+4. keep fiction-specific arc/reader/style interpretations in AutoFiction;
+5. preserve author/product governance: readings never mutate consumer state directly;
+6. add automatic semantic triggers only if a real consumer workflow proves them necessary.
 
 ## Deferred until proven
 
