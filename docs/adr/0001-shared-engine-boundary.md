@@ -25,7 +25,7 @@ Examples that remain outside Writing Engine:
 
 ## Consequences
 
-- Dependency direction is `writing-engine -> consumed by auto-essay and auto-fiction`, never one product through the other.
+- Dependency direction is `auto-essay -> writing-engine` and `auto-fiction -> writing-engine`; neither product depends on the other.
 - Each product can evolve its domain independently.
 - Shared contracts must expose narrow seams rather than product-specific union types.
 - A duplicated implementation is temporarily preferable to a false abstraction when semantics have not converged.
