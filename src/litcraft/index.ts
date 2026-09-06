@@ -46,9 +46,6 @@ export const ObservedStylisticOperationSchema = z.object({
 export type ObservedStylisticOperation = z.infer<
   typeof ObservedStylisticOperationSchema
 >;
-export type ObservedStylisticOperationInput = z.input<
-  typeof ObservedStylisticOperationSchema
->;
 
 export const StyleEffectSchema = z.object({
   kind: z.string().trim().min(1),
@@ -56,7 +53,6 @@ export const StyleEffectSchema = z.object({
 });
 
 export type StyleEffect = z.infer<typeof StyleEffectSchema>;
-export type StyleEffectInput = z.input<typeof StyleEffectSchema>;
 
 export const TextLocationSchema = z
   .object({
@@ -95,7 +91,6 @@ export const TextLocationSchema = z
   });
 
 export type TextLocation = z.infer<typeof TextLocationSchema>;
-export type TextLocationInput = z.input<typeof TextLocationSchema>;
 
 export const TextEvidenceSchema = z
   .object({
@@ -112,7 +107,6 @@ export const TextEvidenceSchema = z
   });
 
 export type TextEvidence = z.infer<typeof TextEvidenceSchema>;
-export type TextEvidenceInput = z.input<typeof TextEvidenceSchema>;
 
 export const StyleObservationProvenanceSchema = z.object({
   origin: z.enum([
@@ -125,9 +119,6 @@ export const StyleObservationProvenanceSchema = z.object({
 });
 
 export type StyleObservationProvenance = z.infer<
-  typeof StyleObservationProvenanceSchema
->;
-export type StyleObservationProvenanceInput = z.input<
   typeof StyleObservationProvenanceSchema
 >;
 
