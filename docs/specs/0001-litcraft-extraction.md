@@ -28,7 +28,7 @@ Therefore Writing Engine must not copy AutoEssay's Litcraft folder wholesale.
 
 ## Ponytail challenge
 
-The initial design proposed extracting analyzers, evaluators and a configurable context seam at once. That is more machinery than the shared engine currently needs.
+The initial design proposed extracting analyzers, evaluators, generic context references and planned-operation abstractions at once. That is more machinery than the shared engine currently needs.
 
 The minimal foundation therefore does **not** extract:
 
@@ -36,12 +36,13 @@ The minimal foundation therefore does **not** extract:
 - `EditorialEffectEvaluator` or any model prompt;
 - provider/retry policy;
 - `ContentStyleArticulation`;
+- planned-operation contracts that only product articulations currently consume;
 - writer/evaluator/revision projection compilers;
 - product evaluation gates;
 - persistence or registries;
 - a plugin/factory framework for consumer-specific schemas.
 
-Products may keep those services while consuming the shared pure contracts.
+Products may keep those services and planning objects while consuming the shared pure contracts.
 
 ## Shared module boundary
 
@@ -58,7 +59,7 @@ Do not split it into packages or service layers until a concrete change becomes 
 
 ### Generic references
 
-Litcraft reuses Writing Engine's existing domain-neutral reference contract from Diffract:
+Where Litcraft needs object references for traces, evaluated effects or Diffract projection, it reuses Writing Engine's existing domain-neutral reference contract:
 
 ```ts
 { kind: string; id: string }
@@ -70,7 +71,7 @@ Do not introduce a second generic identifier abstraction.
 
 A style observation needs structured situation data without knowing the product domain.
 
-Use a small signal list:
+Use only a small signal list:
 
 ```ts
 interface StyleSignal {
@@ -80,7 +81,6 @@ interface StyleSignal {
 
 interface StyleSituation {
   signals: StyleSignal[];
-  refs?: DiffractiveReference[];
 }
 ```
 
@@ -103,9 +103,9 @@ reader_state = narrator reliability becomes uncertain
 
 The product owns the vocabulary of `kind`. Writing Engine only requires non-empty kinds and values.
 
-### StylisticOperation
+### ObservedStylisticOperation
 
-A shared operation represents an observable mechanism rather than a style label.
+A shared observed operation represents an observable mechanism rather than a style label.
 
 Keep the five proven operation families:
 
@@ -126,8 +126,6 @@ An observed operation contains:
 - target;
 - observed effect;
 - intensity (`subtle | moderate | structuring`).
-
-A planned operation contains the same stable mechanism vocabulary plus rationale instead of claiming an observed effect.
 
 ### StyleEffect
 
@@ -278,6 +276,7 @@ AutoFiction can use the same shared primitives while owning:
 - `BookStyleContract`;
 - `NarrativeStyleState`;
 - `NarrativeStyleArticulation`;
+- planned stylistic operations;
 - local versus persistent transition rules;
 - narrative/reader-specific judges and commit rules.
 
@@ -302,7 +301,8 @@ After the minimal foundation is stable:
 3. run AutoEssay's existing Litcraft tests and demonstrators against that adapter;
 4. switch shared semantics only after parity;
 5. consume the same primitives from AutoFiction;
-6. remove duplicated product implementation only when no caller remains.
+6. reconsider planned-operation sharing only when both products implement the same semantics;
+7. remove duplicated product implementation only when no caller remains.
 
 ## Acceptance criteria
 
@@ -319,4 +319,4 @@ After the minimal foundation is stable:
 
 ## Ponytail check
 
-One module, reused generic references, plain Zod contracts and pure functions. No schema factory, plugin system, event bus, registry, persistence layer, analyzer service or evaluator service in this phase.
+One module, reused generic references, plain Zod contracts and pure functions. No observation context references, planned-operation abstraction, schema factory, plugin system, event bus, registry, persistence layer, analyzer service or evaluator service in this phase.
