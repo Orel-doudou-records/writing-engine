@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  ContextBlockSchema,
+  DiffractiveReferenceSchema,
+  type ContextBlock,
+} from "../diffract/index.js";
 
 export const StyleSignalSchema = z.object({
   kind: z.string().trim().min(1),
@@ -285,5 +290,108 @@ export function deriveAuthorStyleConstellation(
       notes: [...new Set(input.ethicalNotes ?? [])],
     },
     derivedAt: new Date().toISOString(),
+  });
+}
+
+export const TransformationTraceSchema = z.object({
+  id: z.string().min(1),
+  unitRef: DiffractiveReferenceSchema,
+  unitVersion: z.number().int().positive(),
+  operationRef: DiffractiveReferenceSchema,
+  provenanceRefs: z.array(DiffractiveReferenceSchema).default([]),
+  declaration: z.string().trim().min(1),
+  evidence: TextEvidenceSchema,
+  status: z.literal("declared"),
+  createdAt: z.string().datetime(),
+});
+
+export type TransformationTrace = z.infer<typeof TransformationTraceSchema>;
+
+export function createTransformationTrace(
+  input: Omit<
+    z.input<typeof TransformationTraceSchema>,
+    "id" | "status" | "createdAt"
+  >
+): TransformationTrace {
+  return TransformationTraceSchema.parse({
+    id: crypto.randomUUID(),
+    status: "declared",
+    createdAt: new Date().toISOString(),
+    ...input,
+  });
+}
+
+export const StyleEffectStatusSchema = z.enum([
+  "absent",
+  "present_ineffective",
+  "partially_effective",
+  "effective",
+  "harmful",
+]);
+
+export type StyleEffectStatus = z.infer<typeof StyleEffectStatusSchema>;
+
+export const EvaluatedStyleEffectSchema = z
+  .object({
+    id: z.string().min(1),
+    scopeRef: DiffractiveReferenceSchema,
+    operationRef: DiffractiveReferenceSchema.optional(),
+    traceRefs: z.array(DiffractiveReferenceSchema).default([]),
+    status: StyleEffectStatusSchema,
+    intendedEffects: z.array(StyleEffectSchema).default([]),
+    observedEffects: z.array(StyleEffectSchema).default([]),
+    unintendedEffects: z.array(StyleEffectSchema).default([]),
+    evidence: z.array(TextEvidenceSchema).default([]),
+    repairSuggestion: z.string().trim().min(1).optional(),
+    evaluatedAt: z.string().datetime(),
+    evaluator: z.string().trim().min(1),
+  })
+  .superRefine((effect, context) => {
+    if (effect.status !== "absent" && effect.evidence.length === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["evidence"],
+        message: "a non-absent style effect requires textual evidence",
+      });
+    }
+
+    if (effect.status !== "effective" && effect.repairSuggestion === undefined) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["repairSuggestion"],
+        message: "a non-effective style effect requires a repair suggestion",
+      });
+    }
+  });
+
+export type EvaluatedStyleEffect = z.infer<typeof EvaluatedStyleEffectSchema>;
+
+export function createEvaluatedStyleEffect(
+  input: Omit<z.input<typeof EvaluatedStyleEffectSchema>, "id" | "evaluatedAt">
+): EvaluatedStyleEffect {
+  return EvaluatedStyleEffectSchema.parse({
+    id: crypto.randomUUID(),
+    evaluatedAt: new Date().toISOString(),
+    ...input,
+  });
+}
+
+export function evaluatedStyleEffectToContextBlock(
+  effect: EvaluatedStyleEffect
+): ContextBlock {
+  const render = (items: StyleEffect[]) =>
+    items.length > 0
+      ? items.map((item) => `${item.kind}: ${item.statement}`).join(" | ")
+      : "none";
+
+  return ContextBlockSchema.parse({
+    ref: { kind: "style-effect", id: effect.id },
+    label: "Evaluated style effect",
+    text: [
+      `status: ${effect.status}`,
+      `intended: ${render(effect.intendedEffects)}`,
+      `observed: ${render(effect.observedEffects)}`,
+      `unintended: ${render(effect.unintendedEffects)}`,
+    ].join("\n"),
   });
 }
