@@ -35,6 +35,8 @@ describe("minimal Diffract core", () => {
     expect(reading.impacts[0]?.target).toEqual({ kind: "scene", id: "scene-7" });
     expect(reading.id).toBeTruthy();
     expect(reading.createdAt).toBeTruthy();
+    expect(Object.isFrozen(reading)).toBe(true);
+    expect(Object.isFrozen(reading.pass4.included)).toBe(true);
   });
 
   it("reads a fragment through consumer-projected context without knowing the consumer domain", async () => {
