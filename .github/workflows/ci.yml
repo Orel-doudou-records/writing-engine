@@ -15,3 +15,12 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm test
       - run: npm run typecheck
+      - name: Package consumer smoke test
+        run: |
+          PACKAGE="$(npm pack --silent)"
+          CONSUMER="$RUNNER_TEMP/writing-engine-consumer"
+          mkdir -p "$CONSUMER"
+          cd "$CONSUMER"
+          npm init -y >/dev/null
+          npm install "$GITHUB_WORKSPACE/$PACKAGE" --ignore-scripts >/dev/null
+          node --input-type=module -e "const m = await import('writing-engine'); if (!m.StyleObservationSchema || !m.createDiffractiveCore) throw new Error('missing public exports')"
