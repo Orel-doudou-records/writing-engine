@@ -150,3 +150,140 @@ export function createStyleObservation(
     ...input,
   });
 }
+
+export const AuthorStyleDeclarationSchema = z.object({
+  id: z.string().min(1),
+  authorId: z.string().trim().min(1),
+  statement: z.string().trim().min(1),
+  scope: z.enum(["global", "genre", "project", "unit"]).default("global"),
+  status: z.enum(["proposed", "validated", "rejected"]).default("proposed"),
+  provenance: z.string().trim().min(1),
+});
+
+export type AuthorStyleDeclaration = z.infer<
+  typeof AuthorStyleDeclarationSchema
+>;
+
+export const ObservedPracticeSummarySchema = z.object({
+  family: StylisticOperationFamilySchema,
+  category: z.string().trim().min(1),
+  observationIds: z.array(z.string().min(1)).min(1),
+  operations: z.array(z.string().min(1)).min(1),
+  triggers: z.array(z.string().min(1)).min(1),
+  observedEffects: z.array(z.string().min(1)).min(1),
+  confidence: z.enum(["low", "medium", "high"]),
+});
+
+export type ObservedPracticeSummary = z.infer<
+  typeof ObservedPracticeSummarySchema
+>;
+
+export const AuthorStyleConstellationSchema = z.object({
+  authorId: z.string().trim().min(1),
+  observationIds: z.array(z.string().min(1)).default([]),
+  observedPractices: z.array(ObservedPracticeSummarySchema).default([]),
+  declaredPreferences: z.array(AuthorStyleDeclarationSchema).default([]),
+  validatedSignatures: z.array(z.string().min(1)).default([]),
+  productiveTensions: z.array(z.string().min(1)).default([]),
+  unwantedDrifts: z.array(z.string().min(1)).default([]),
+  ethicalBoundary: z.object({
+    preserveMechanismsNotSurface: z.literal(true),
+    forbiddenVerbatimReuse: z.literal(true),
+    notes: z.array(z.string().min(1)).default([]),
+  }),
+  derivedAt: z.string().datetime(),
+});
+
+export type AuthorStyleConstellation = z.infer<
+  typeof AuthorStyleConstellationSchema
+>;
+
+export interface DeriveAuthorStyleConstellationInput {
+  authorId: string;
+  observations: StyleObservation[];
+  declarations?: AuthorStyleDeclaration[];
+  validatedSignatures?: string[];
+  productiveTensions?: string[];
+  unwantedDrifts?: string[];
+  ethicalNotes?: string[];
+}
+
+export function deriveAuthorStyleConstellation(
+  input: DeriveAuthorStyleConstellationInput
+): AuthorStyleConstellation {
+  const observations = input.observations.filter(
+    (observation) => observation.authorId === input.authorId
+  );
+  const declarations = (input.declarations ?? []).filter(
+    (declaration) => declaration.authorId === input.authorId
+  );
+  const grouped = new Map<
+    string,
+    {
+      family: StylisticOperationFamily;
+      category: string;
+      observationIds: Set<string>;
+      operations: Set<string>;
+      triggers: Set<string>;
+      observedEffects: Set<string>;
+      confidence: Set<StyleObservation["confidence"]>;
+    }
+  >();
+
+  for (const observation of observations) {
+    for (const operation of observation.operations) {
+      const key = `${operation.family}:${operation.category}`;
+      const current = grouped.get(key) ?? {
+        family: operation.family,
+        category: operation.category,
+        observationIds: new Set<string>(),
+        operations: new Set<string>(),
+        triggers: new Set<string>(),
+        observedEffects: new Set<string>(),
+        confidence: new Set<StyleObservation["confidence"]>(),
+      };
+
+      current.observationIds.add(observation.id);
+      current.operations.add(operation.operation);
+      current.triggers.add(operation.trigger);
+      current.observedEffects.add(operation.observedEffect);
+      for (const effect of observation.effects) {
+        current.observedEffects.add(effect.statement);
+      }
+      current.confidence.add(observation.confidence);
+      grouped.set(key, current);
+    }
+  }
+
+  const observedPractices = [...grouped.values()].map((practice) =>
+    ObservedPracticeSummarySchema.parse({
+      family: practice.family,
+      category: practice.category,
+      observationIds: [...practice.observationIds],
+      operations: [...practice.operations],
+      triggers: [...practice.triggers],
+      observedEffects: [...practice.observedEffects],
+      confidence: practice.confidence.has("low")
+        ? "low"
+        : practice.confidence.has("medium")
+          ? "medium"
+          : "high",
+    })
+  );
+
+  return AuthorStyleConstellationSchema.parse({
+    authorId: input.authorId,
+    observationIds: observations.map((observation) => observation.id),
+    observedPractices,
+    declaredPreferences: declarations,
+    validatedSignatures: [...new Set(input.validatedSignatures ?? [])],
+    productiveTensions: [...new Set(input.productiveTensions ?? [])],
+    unwantedDrifts: [...new Set(input.unwantedDrifts ?? [])],
+    ethicalBoundary: {
+      preserveMechanismsNotSurface: true,
+      forbiddenVerbatimReuse: true,
+      notes: [...new Set(input.ethicalNotes ?? [])],
+    },
+    derivedAt: new Date().toISOString(),
+  });
+}
