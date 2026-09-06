@@ -1,0 +1,6 @@
+[submodule ".guardrails/matt-skills"]
+	path = .guardrails/matt-skills
+	url = https://github.com/mattpocock/skills.git
+[submodule ".guardrails/ponytail"]
+	path = .guardrails/ponytail
+	url = https://github.com/DietrichGebert/ponytail.git
