@@ -11,12 +11,12 @@
 
 ## Phase 1: minimal Diffract foundation
 
-1. implement the domain-neutral four-pass/cut/tradeoff discipline;
-2. expose generic `{kind,id}` references and consumer-projected context blocks;
-3. validate existing cuts before reasoning and reject invented impact identifiers after reasoning;
-4. keep reading artifacts immutable and non-executable;
-5. validate with deterministic fake-client tests and CI;
-6. leave AutoEssay and AutoFiction adapters for their owning repositories.
+- [x] implement the domain-neutral four-pass/cut/tradeoff discipline;
+- [x] expose generic `{kind,id}` references and consumer-projected context blocks;
+- [x] validate context before reasoning and reject invented impact identifiers after reasoning;
+- [x] keep reading artifacts immutable and non-executable;
+- [x] validate with deterministic fake-client tests and CI;
+- [x] leave AutoEssay and AutoFiction adapters for their owning repositories.
 
 This phase does not require Litcraft and does not implement style-state feedback by itself.
 
