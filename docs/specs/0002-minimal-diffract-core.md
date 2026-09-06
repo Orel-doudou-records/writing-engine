@@ -2,7 +2,7 @@
 
 ## Status
 
-Implementation in progress.
+Implemented on PR #2. The code commit passed GitHub Actions tests and TypeScript typechecking.
 
 ## Goal
 
@@ -150,14 +150,14 @@ AutoFiction can project scenes, arcs, reader state, story state and evaluated st
 
 ## Acceptance criteria
 
-- Writing Engine contains a runnable TypeScript Diffract core with no imports from AutoEssay or AutoFiction.
-- The core accepts consumer-projected context and existing cuts.
-- The output contains the four passes, cut, verdict, tradeoffs and generic impacts.
-- Duplicate context references fail before model invocation.
-- Invented impact targets fail after model output validation.
-- Empty Pass 1/2/3 findings remain valid.
-- No code mutates consumer state.
-- Tests use a deterministic fake structured client; no network/model provider is required.
+- [x] Writing Engine contains a runnable TypeScript Diffract core with no imports from AutoEssay or AutoFiction.
+- [x] The core accepts consumer-projected context and existing cuts.
+- [x] The output contains the four passes, cut, verdict, tradeoffs and generic impacts.
+- [x] Duplicate context references fail before model invocation.
+- [x] Invented impact targets fail after model output validation.
+- [x] Empty Pass 1/2/3 findings remain valid.
+- [x] No code mutates consumer state.
+- [x] Tests use a deterministic fake structured client; no network/model provider is required.
 
 ## Ponytail check
 
