@@ -136,23 +136,25 @@ export interface CreateDiffractiveReadingInput {
 export function createDiffractiveReading(
   input: CreateDiffractiveReadingInput
 ): DiffractiveReading {
-  return DiffractiveReadingSchema.parse({
-    id: crypto.randomUUID(),
-    fragment: input.fragment,
-    pass1: { refraction: input.pass1?.refraction ?? [] },
-    pass2: {
-      namedPatterns: input.pass2?.namedPatterns ?? [],
-      revealedDefaults: input.pass2?.revealedDefaults ?? [],
-    },
-    pass3: { entanglements: input.pass3?.entanglements ?? [] },
-    pass4: input.pass4,
-    verdict: input.verdict,
-    verdictDetail: input.verdictDetail,
-    action: input.action,
-    tradeoffs: input.tradeoffs ?? [],
-    impacts: input.impacts ?? [],
-    createdAt: new Date().toISOString(),
-  });
+  return deepFreeze(
+    DiffractiveReadingSchema.parse({
+      id: crypto.randomUUID(),
+      fragment: input.fragment,
+      pass1: { refraction: input.pass1?.refraction ?? [] },
+      pass2: {
+        namedPatterns: input.pass2?.namedPatterns ?? [],
+        revealedDefaults: input.pass2?.revealedDefaults ?? [],
+      },
+      pass3: { entanglements: input.pass3?.entanglements ?? [] },
+      pass4: input.pass4,
+      verdict: input.verdict,
+      verdictDetail: input.verdictDetail,
+      action: input.action,
+      tradeoffs: input.tradeoffs ?? [],
+      impacts: input.impacts ?? [],
+      createdAt: new Date().toISOString(),
+    })
+  );
 }
 
 export const DiffractiveReadingRequestSchema = z
@@ -387,4 +389,16 @@ function referenceKey(ref: DiffractiveReference): string {
 
 function formatReference(ref: DiffractiveReference): string {
   return `[${referenceKey(ref)}]`;
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(
+      value as unknown as Record<string, unknown>
+    )) {
+      deepFreeze(child);
+    }
+  }
+  return value;
 }
