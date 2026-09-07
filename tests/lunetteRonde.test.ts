@@ -34,6 +34,15 @@ describe("Lunette Ronde shared contract", () => {
 
     expect(() =>
       LunetteRondeFindingSchema.parse({
+        kind: "clarify",
+        evidence: { excerpt: "Cette phrase tient.", ref: "product-specific" },
+        diagnosis: "Une référence produit ne fait pas partie du contrat partagé.",
+        suggestion: "Garder la provenance dans l'adaptateur produit.",
+      })
+    ).toThrow();
+
+    expect(() =>
+      LunetteRondeFindingSchema.parse({
         kind: "open_question",
         evidence: { excerpt: "Tout devait changer." },
         diagnosis: "Le référent de tout est indéterminé.",
