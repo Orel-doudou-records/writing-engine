@@ -18,10 +18,7 @@ export type LunetteRondeFindingKind = z.infer<
 >;
 
 export const LunetteRondeEvidenceSchema = z
-  .object({
-    excerpt: z.string().trim().min(1),
-    ref: z.string().trim().min(1).optional(),
-  })
+  .object({ excerpt: z.string().trim().min(1) })
   .strict();
 
 export type LunetteRondeEvidence = z.infer<typeof LunetteRondeEvidenceSchema>;
