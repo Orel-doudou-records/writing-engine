@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { TextEvidenceSchema } from "../litcraft/index.js";
 
 export const LunetteRondeModeSchema = z.enum(["lite", "full", "ultra"]);
 export type LunetteRondeMode = z.infer<typeof LunetteRondeModeSchema>;
@@ -18,10 +17,19 @@ export type LunetteRondeFindingKind = z.infer<
   typeof LunetteRondeFindingKindSchema
 >;
 
+export const LunetteRondeEvidenceSchema = z
+  .object({
+    excerpt: z.string().trim().min(1),
+    ref: z.string().trim().min(1).optional(),
+  })
+  .strict();
+
+export type LunetteRondeEvidence = z.infer<typeof LunetteRondeEvidenceSchema>;
+
 export const LunetteRondeFindingSchema = z
   .object({
     kind: LunetteRondeFindingKindSchema,
-    evidence: TextEvidenceSchema,
+    evidence: LunetteRondeEvidenceSchema,
     diagnosis: z.string().trim().min(1),
     suggestion: z.string().trim().min(1).optional(),
     authorQuestion: z.string().trim().min(1).optional(),
