@@ -42,6 +42,26 @@ describe("Lunette Ronde shared contract", () => {
 
     expect(() =>
       LunetteRondeFindingSchema.parse({
+        kind: "open_question",
+        evidence: { excerpt: "Tout devait changer." },
+        diagnosis: "Le référent de tout est indéterminé.",
+        authorQuestion: "Que désigne « tout » ici ?",
+        suggestion: "Remplacer « tout » par le référent supposé.",
+      })
+    ).toThrow(/cannot prescribe/);
+
+    expect(() =>
+      LunetteRondeFindingSchema.parse({
+        kind: "clarify",
+        evidence: { excerpt: "Cette évolution est significative." },
+        diagnosis: "Le caractère significatif n'est pas situé.",
+        suggestion: "Nommer l'effet observable.",
+        authorQuestion: "Quel effet vouliez-vous nommer ?",
+      })
+    ).toThrow(/reserved for open_question/);
+
+    expect(() =>
+      LunetteRondeFindingSchema.parse({
         kind: "keep",
         evidence: { excerpt: "La porte resta ouverte." },
         diagnosis: "Le passage tient.",
@@ -53,6 +73,7 @@ describe("Lunette Ronde shared contract", () => {
     expect(instructions).toContain("vient après la compréhension");
     expect(instructions).toContain("degré de certitude");
     expect(instructions).toContain("open_question");
+    expect(instructions).toContain("sans suggestion de correction");
     expect(instructions).toContain("origine humaine ou IA");
   });
 });
