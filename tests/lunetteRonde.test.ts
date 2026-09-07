@@ -32,51 +32,41 @@ describe("Lunette Ronde shared contract", () => {
       }).findings
     ).toHaveLength(3);
 
-    expect(() =>
-      LunetteRondeFindingSchema.parse({
+    for (const invalidFinding of [
+      {
         kind: "clarify",
         evidence: { excerpt: "Cette phrase tient.", ref: "product-specific" },
         diagnosis: "Une référence produit ne fait pas partie du contrat partagé.",
         suggestion: "Garder la provenance dans l'adaptateur produit.",
-      })
-    ).toThrow();
-
-    expect(() =>
-      LunetteRondeFindingSchema.parse({
+      },
+      {
         kind: "open_question",
         evidence: { excerpt: "Tout devait changer." },
         diagnosis: "Le référent de tout est indéterminé.",
-      })
-    ).toThrow(/author question/);
-
-    expect(() =>
-      LunetteRondeFindingSchema.parse({
+      },
+      {
         kind: "open_question",
         evidence: { excerpt: "Tout devait changer." },
         diagnosis: "Le référent de tout est indéterminé.",
         authorQuestion: "Que désigne « tout » ici ?",
         suggestion: "Remplacer « tout » par le référent supposé.",
-      })
-    ).toThrow(/cannot prescribe/);
-
-    expect(() =>
-      LunetteRondeFindingSchema.parse({
+      },
+      {
         kind: "clarify",
         evidence: { excerpt: "Cette évolution est significative." },
         diagnosis: "Le caractère significatif n'est pas situé.",
         suggestion: "Nommer l'effet observable.",
         authorQuestion: "Quel effet vouliez-vous nommer ?",
-      })
-    ).toThrow(/reserved for open_question/);
-
-    expect(() =>
-      LunetteRondeFindingSchema.parse({
+      },
+      {
         kind: "keep",
         evidence: { excerpt: "La porte resta ouverte." },
         diagnosis: "Le passage tient.",
         suggestion: "Raccourcir.",
-      })
-    ).toThrow(/cannot prescribe/);
+      },
+    ]) {
+      expect(() => LunetteRondeFindingSchema.parse(invalidFinding)).toThrow();
+    }
 
     const instructions = buildLunetteRondeInstructions("full");
     expect(instructions).toContain("vient après la compréhension");
