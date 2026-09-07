@@ -383,6 +383,10 @@ export function evaluatedStyleEffectToContextBlock(
     items.length > 0
       ? items.map((item) => `${item.kind}: ${item.statement}`).join(" | ")
       : "none";
+  const evidence =
+    effect.evidence.length > 0
+      ? effect.evidence.map((item) => JSON.stringify(item)).join(" | ")
+      : "none";
 
   return ContextBlockSchema.parse({
     ref: { kind: "style-effect", id: effect.id },
@@ -392,6 +396,7 @@ export function evaluatedStyleEffectToContextBlock(
       `intended: ${render(effect.intendedEffects)}`,
       `observed: ${render(effect.observedEffects)}`,
       `unintended: ${render(effect.unintendedEffects)}`,
+      `evidence: ${evidence}`,
     ].join("\n"),
   });
 }
