@@ -36,12 +36,22 @@ export const LunetteRondeFindingSchema = z
   })
   .strict()
   .superRefine((finding, context) => {
-    if (finding.kind === "open_question" && finding.authorQuestion === undefined) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["authorQuestion"],
-        message: "an open question requires a precise author question",
-      });
+    if (finding.kind === "open_question") {
+      if (finding.authorQuestion === undefined) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["authorQuestion"],
+          message: "an open question requires a precise author question",
+        });
+      }
+      if (finding.suggestion !== undefined) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["suggestion"],
+          message: "an open question cannot prescribe an intervention",
+        });
+      }
+      return;
     }
 
     if (finding.kind === "keep") {
@@ -54,11 +64,18 @@ export const LunetteRondeFindingSchema = z
       return;
     }
 
-    if (finding.kind !== "open_question" && finding.suggestion === undefined) {
+    if (finding.suggestion === undefined) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["suggestion"],
         message: "an intervention finding requires a situated suggestion",
+      });
+    }
+    if (finding.authorQuestion !== undefined) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["authorQuestion"],
+        message: "author questions are reserved for open_question findings",
       });
     }
   });
@@ -93,7 +110,7 @@ export function buildLunetteRondeInstructions(
     "Préserve le sens, les faits fournis, le degré de certitude, les citations, les contraintes explicites et la voix de l'auteur.",
     "Une phrase plus courte mais moins exacte est une mauvaise correction.",
     "Ne raccourcis pas par principe : protège le rythme, l'ellipse, l'ambiguïté productive, la précision technique et les difficultés qui produisent un effet réel.",
-    "Si une correction honnête exige une information absente ou une décision d'auteur, retourne open_question avec une question précise au lieu d'inventer.",
+    "Si une correction honnête exige une information absente ou une décision d'auteur, retourne open_question avec une question précise et sans suggestion de correction.",
     "keep est un résultat valide quand le passage tient déjà.",
     "Décris uniquement des phénomènes observables du texte ; ne déduis jamais son origine humaine ou IA.",
     `Mode ${resolvedMode}: ${MODE_GUIDANCE[resolvedMode]}`,
