@@ -1,0 +1,1 @@
+run_date,passage_id,text_id,product,text_type,segment_profile,mode,lr_version,model,expected_problem,expected_problem_description,expected_problem_detected,finding_kind,evidence_excerpt,diagnosis,proposal,human_verdict,danger_reason,notes
