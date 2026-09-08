@@ -18,20 +18,23 @@ Litcraft moves conceptually into Writing Engine as a shared module, but it is ex
 
 Writing Engine owns the shared semantics of:
 
-- observable stylistic operation vocabulary;
-- grounded style observations with textual evidence and provenance;
+- observable stylistic mechanisms through `ObservedStylisticOperation`;
+- grounded `StyleObservation` values with textual evidence and provenance;
 - derived `AuthorStyleConstellation` behavior;
-- planned stylistic operations;
-- transformation traces;
-- independent style-effect evaluation primitives.
+- `TransformationTrace` provenance for attempted operations;
+- the `EvaluatedStyleEffect` result contract for observed outcomes.
 
-Consumer repositories own the reason a style operation matters in their domain.
+Writing Engine does **not** own planned stylistic-operation contracts in the current extraction. Planning and articulation remain product-owned until at least two real consumers use the same planning semantics.
 
-AutoEssay keeps `ContentStyleArticulation`, argumentative/documentary context and essay-specific evaluation gates.
+Consumer repositories own the reason a style operation matters in their domain and the decision to plan or apply it.
 
-AutoFiction keeps `NarrativeStyleArticulation`, `NarrativeStyleState`, `BookStyleContract`, narrative/reader impacts and fiction-specific judges.
+AutoEssay keeps `ContentStyleArticulation`, argumentative/documentary context, planned operations and essay-specific evaluation gates.
+
+AutoFiction keeps `NarrativeStyleArticulation`, `NarrativeStyleState`, `BookStyleContract`, planned operations, narrative/reader impacts and fiction-specific judges.
 
 `AuthorStyleConstellation` remains analytical and non-executable. It never feeds the writer directly as a global imitation profile.
+
+`EvaluatedStyleEffect` is a shared result contract, not a shared evaluator service. Model prompts, judge routing and product-specific scores remain in consumers.
 
 ## Consequences
 
@@ -39,6 +42,8 @@ AutoFiction keeps `NarrativeStyleArticulation`, `NarrativeStyleState`, `BookStyl
 - Shared style observations cannot require `ClaimType`, `SourceRegime`, `NarrativeArc` or `ReaderModel`.
 - Products provide situated context through adapters or product-owned references.
 - The engine preserves mechanisms, provenance and effects rather than surface imitation.
+- Planned-operation sharing must be reconsidered only after identical consumer semantics are demonstrated.
+- A shared evaluated effect can be projected into Diffract without moving product evaluation gates into Writing Engine.
 
 ## Rejected alternatives
 
@@ -49,6 +54,10 @@ Rejected because the core semantics already have two real consumers and would dr
 ### Copy AutoEssay's Litcraft folder unchanged
 
 Rejected because it would leak essay-specific domain types into the shared engine.
+
+### Extract planned operations before consumer parity
+
+Rejected because similarly named essay and fiction planning objects do not yet prove identical semantics. Planning remains product-owned until the extraction rule is satisfied.
 
 ### Restore a global style-profile-to-prompt engine
 

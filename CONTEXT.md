@@ -35,17 +35,19 @@ The shared contract must not require essay-only concepts such as claims or sourc
 
 A longitudinal, derived view over grounded observations and explicit author declarations. It is analytical and non-executable. It must never connect directly to a writer as a global imitation profile.
 
-### StylisticOperation
+### ObservedStylisticOperation
 
-A structured writing operation with a concrete mechanism, target, rationale or trigger, intensity and intended/observed effect. It is not a prose preset.
+A structured observation of a concrete writing mechanism with a family, category, trigger, operation, target, observed effect and intensity. It is not a prose preset and it is not a planned writer directive.
+
+Planned stylistic operations remain product-owned until at least two consumers prove the same planning semantics.
 
 ### TransformationTrace
 
 A provenance record that says a writer attempted a validated operation at a specific text location. A trace is a declaration, never proof that the intended effect succeeded.
 
-### StyleEffectEvaluation
+### EvaluatedStyleEffect
 
-An independent evaluation of effects actually visible in written text. It may report intended effects, observed effects, unintended effects and evidence excerpts. Product-specific evaluation gates remain outside Writing Engine.
+A shared result contract for effects actually visible in written text. It may report intended effects, observed effects, unintended effects and evidence excerpts. Product-specific evaluator services, scores and gates remain outside Writing Engine.
 
 ### Diffract
 
