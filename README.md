@@ -13,14 +13,20 @@ Initial consumers:
 
 ### Diffract
 
-A minimal domain-neutral Diffract core is being established first. Consumers project their own objects into generic context blocks and receive a structured four-pass reading with an explicit cut, tradeoffs, verdict and validated generic impacts.
+A minimal domain-neutral Diffract core lets consumers project their own objects into generic context blocks and receive a structured four-pass reading with an explicit cut, tradeoffs, verdict and validated generic impacts.
 
 The core never knows what a claim, source, scene, arc or reader state is, and it never mutates consumer state.
 
 ### Litcraft
 
-Litcraft remains the first shared style-infrastructure extraction: style observations, author-style constellation, transformation traces and evaluated style effects. Its migration from AutoEssay is specified separately.
+Litcraft is the shared style-observation and style-effect infrastructure: style observations, author-style constellation, transformation traces and evaluated style effects.
 
-Once Litcraft exposes evaluated effects, products can project those effects back into Diffract for post-writing re-reading without coupling the two modules.
+Products can project evaluated effects back into Diffract for post-writing re-reading without coupling the two modules. Product-specific style articulation and state transitions remain outside Writing Engine.
+
+### Lunette Ronde
+
+Lunette Ronde is the shared read-only editorial-review contract proven by AutoEssay and AutoFiction. It returns situated intervention findings, explicit author questions or `keep` findings from exact textual evidence while preserving meaning, certainty, voice and productive difficulty.
+
+It is advisory only: no automatic rewrite, no literary-quality or humanity score, no AI-origin inference and no product-state mutation. Corpus-wide audit semantics remain deferred until two consumers prove the same need.
 
 See `CONTEXT.md`, `docs/adr/` and `docs/specs/` for the authoritative boundaries.
