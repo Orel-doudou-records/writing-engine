@@ -53,6 +53,24 @@ A shared decision-reading discipline that reads changes through the rest of a wr
 
 A product supplies domain context and interprets impacts. AutoEssay may project plan/bibliography impacts; AutoFiction may project arc/reader/style impacts.
 
+### Lunette Ronde
+
+A shared read-only editorial-review contract. Lunette Ronde identifies situated editorial pressure in a supplied passage and may return a minimal intervention, an explicit author question or a `keep` finding.
+
+The shared contract owns only:
+
+- the modes `lite | full | ultra`;
+- exact textual evidence excerpts;
+- the shared finding vocabulary;
+- generic instructions to preserve meaning, certainty, voice, precision and productive difficulty;
+- the prohibition on inferring human or AI authorship.
+
+AutoEssay and AutoFiction own the context supplied around that contract, the model/judge routing, evidence grounding against the actual text, author decisions and any rewrite or state mutation.
+
+Lunette Ronde is not a writer, a humanizer, an AI detector or a literary-quality scorer. The current primitive is local review, not corpus-wide audit.
+
+A Lunette Ronde finding does not automatically become a Litcraft observation/effect and does not automatically trigger Diffract. Any such mapping remains a product decision until two consumers prove identical semantics.
+
 ## Product-owned concepts
 
 ### AutoEssay owns
