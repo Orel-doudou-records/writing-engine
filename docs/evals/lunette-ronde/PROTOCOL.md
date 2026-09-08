@@ -76,6 +76,10 @@ Pendant une campagne de comparaison :
 
 Créer une ligne par finding.
 
+Répéter les métadonnées du passage (`passage_id`, `text_id`, produit, mode, version) sur chaque ligne si cela facilite la lecture du tableur.
+
+En revanche, renseigner `expected_problem`, `expected_problem_description` et `expected_problem_detected` **uniquement sur la première ligne du passage**. Laisser ces trois cellules vides sur les findings suivants. Sinon un passage avec plusieurs findings serait compté plusieurs fois dans le rappel approximatif.
+
 Pour chaque finding, reporter :
 
 - `finding_kind` ;
@@ -160,7 +164,7 @@ Renseigner :
 
 Le wording n'a pas besoin d'être identique à votre annotation initiale. C'est la compréhension du problème qui compte.
 
-Pour un passage volontairement bon où `expected_problem = no`, ne comptez pas comme échec une review vide ou un `keep` pertinent.
+Pour un passage volontairement bon où `expected_problem = no`, ne comptez pas comme échec une review vide ou un `keep` pertinent. Ces lignes ne font pas partie du dénominateur du rappel des problèmes attendus.
 
 ## 7. Calculs manuels
 
@@ -189,7 +193,7 @@ dangerous / findings annotés
 ### Questions pertinentes
 
 ```text
-open_question + useful / tous les open_question annotés
+open_question jugées useful / tous les open_question annotés
 ```
 
 ### Rappel approximatif
