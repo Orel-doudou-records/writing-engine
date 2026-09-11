@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ProposalSchema,
   createLiteraryManuscript,
+  insertLiteraryNode,
   createProposal,
   createRevisionGraph,
   createChangeSet,
@@ -23,24 +24,21 @@ function setup(): {
   graph: RevisionGraph;
   canonicalManuscript: LiteraryManuscript;
 } {
-  const canonicalManuscript = createLiteraryManuscript({
+  let canonicalManuscript = createLiteraryManuscript({
     id: "manuscript-1",
-    children: [
-      {
-        id: "chapter-1",
-        kind: "chapter",
-        title: "Chapter One",
-        children: [
-          {
-            id: "p-1",
-            kind: "paragraph",
-            content: "Original paragraph.",
-            createdBy: author,
-            createdAt: now,
-          },
-        ],
-      },
-    ],
+    title: "Book",
+  });
+  canonicalManuscript = insertLiteraryNode(canonicalManuscript, {
+    id: "chapter-1",
+    kind: "chapter",
+    parentId: "manuscript-1",
+    title: "Chapter One",
+  });
+  canonicalManuscript = insertLiteraryNode(canonicalManuscript, {
+    id: "p-1",
+    kind: "paragraph",
+    parentId: "chapter-1",
+    contentRef: { nodeId: "p-1", version: 1 },
   });
 
   let graph = createRevisionGraph({
