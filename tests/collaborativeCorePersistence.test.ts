@@ -125,7 +125,7 @@ async function runPersistenceContract(factory: () => CollaborativeCoreStore) {
   });
 
   expect(
-    await store.resolveContentVersion("project-1", "p-1", 2)
+    await store.resolveContentVersion("project-1", "r-work", "p-1", 2)
   ).toMatchObject({ content: "Revised paragraph." });
   expect((await store.loadRevision("project-1", "r-work"))?.id).toBe("r-work");
   expect((await store.loadChangeSet("project-1", "cs-work"))?.id).toBe("cs-work");
@@ -182,7 +182,7 @@ async function runPersistenceContract(factory: () => CollaborativeCoreStore) {
     expectedHeadRevisionId: "r0",
     commit: integrated.commit,
   });
-  await store.saveIntegration(integrated.integration);
+  await store.saveIntegration("project-1", integrated.integration);
   await store.saveProposal(integrated.proposal);
 
   expect((await store.loadCurrentManuscript("project-1", "main"))?.nodes["p-1"].contentRef).toEqual({
@@ -193,6 +193,9 @@ async function runPersistenceContract(factory: () => CollaborativeCoreStore) {
     nodeId: "p-1",
     version: 1,
   });
+  expect(
+    await store.resolveContentVersion("project-1", "r-integrated", "p-1", 2)
+  ).toMatchObject({ content: "Revised paragraph." });
   expect((await store.loadSnapshot("project-1", "r-integrated"))?.revisionId).toBe(
     "r-integrated"
   );
@@ -241,11 +244,81 @@ describe("Collaborative Manuscript Core persistence", () => {
     const store = createInMemoryCollaborativeCoreStore();
     const { v1 } = await seedStore(store);
 
-    await store.appendContentVersions("project-1", [v1]);
+    await store.appendContentVersions("project-1", "r0", [v1]);
     await expect(
-      store.appendContentVersions("project-1", [{ ...v1, content: "Mutated history" }])
+      store.appendContentVersions("project-1", "r0", [{ ...v1, content: "Mutated history" }])
     ).rejects.toThrow(/immutable content version conflict/);
 
-    expect(await store.resolveContentVersion("project-1", "p-1", 1)).toEqual(v1);
+    expect(await store.resolveContentVersion("project-1", "r0", "p-1", 1)).toEqual(v1);
+  });
+
+  it("keeps the same local content ordinal distinct across divergent branches", async () => {
+    const store = createInMemoryCollaborativeCoreStore();
+    const { manuscript } = await seedStore(store);
+    const baseGraph = await store.loadRevisionGraph("project-1");
+    const graphWithAlternative = createWorkBranch(baseGraph!, {
+      id: "workspace-alt",
+      kind: "workspace",
+      fromRevisionId: "r0",
+    });
+    await store.createBranch("project-1", graphWithAlternative.branches["workspace-alt"]);
+
+    const first = commitChangeSet({
+      graph: graphWithAlternative,
+      manuscript,
+      branchId: "workspace-edit",
+      revisionId: "r-work-a",
+      expectedHeadRevisionId: "r0",
+      changeSet: createChangeSet({
+        id: "cs-a",
+        changes: [{
+          kind: "replace_content",
+          baseRevisionId: "r0",
+          nodeId: "p-1",
+          expectedContentVersion: { nodeId: "p-1", version: 1 },
+          content: "Branch A.",
+        }],
+      }),
+      author: editor,
+      createdAt: "2026-09-11T20:30:00.000Z",
+    });
+    await persistCommit(store, {
+      projectId: "project-1",
+      expectedHeadRevisionId: "r0",
+      commit: first,
+    });
+
+    const graphAfterFirst = await store.loadRevisionGraph("project-1");
+    const second = commitChangeSet({
+      graph: graphAfterFirst!,
+      manuscript,
+      branchId: "workspace-alt",
+      revisionId: "r-work-b",
+      expectedHeadRevisionId: "r0",
+      changeSet: createChangeSet({
+        id: "cs-b",
+        changes: [{
+          kind: "replace_content",
+          baseRevisionId: "r0",
+          nodeId: "p-1",
+          expectedContentVersion: { nodeId: "p-1", version: 1 },
+          content: "Branch B.",
+        }],
+      }),
+      author: author,
+      createdAt: "2026-09-11T20:31:00.000Z",
+    });
+    await persistCommit(store, {
+      projectId: "project-1",
+      expectedHeadRevisionId: "r0",
+      commit: second,
+    });
+
+    expect(
+      (await store.resolveContentVersion("project-1", "r-work-a", "p-1", 2))?.content
+    ).toBe("Branch A.");
+    expect(
+      (await store.resolveContentVersion("project-1", "r-work-b", "p-1", 2))?.content
+    ).toBe("Branch B.");
   });
 });
