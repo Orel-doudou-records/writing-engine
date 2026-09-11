@@ -243,6 +243,20 @@ function walkAncestors(project: ProjectState, revisionId: string): string[] {
   return result;
 }
 
+function firstParentLineage(project: ProjectState, revisionId: string): string[] {
+  const result: string[] = [];
+  let currentId: string | undefined = revisionId;
+  while (currentId !== undefined) {
+    const revision = project.revisions.get(currentId);
+    if (revision === undefined) {
+      throw new Error(`revision not found: ${currentId}`);
+    }
+    result.push(currentId);
+    currentId = revision.parentIds[0];
+  }
+  return result;
+}
+
 export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
   const projects = new Map<string, ProjectState>();
 
@@ -316,9 +330,8 @@ export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
     async resolveContentVersion(projectId, revisionId, nodeId, version) {
       const project = projects.get(projectId);
       if (project === undefined) return undefined;
-      if (!project.revisions.has(revisionId)) return undefined;
 
-      for (const candidateRevisionId of [revisionId, ...walkAncestors(project, revisionId)]) {
+      for (const candidateRevisionId of firstParentLineage(project, revisionId)) {
         const content = project.contentVersions.get(
           contentVersionKey(candidateRevisionId, nodeId, version)
         );
@@ -496,6 +509,9 @@ export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
       const parsed = IntegrationSchema.parse(integration);
       if (!project.proposals.has(parsed.proposalId)) {
         throw new Error(`proposal not found for integration: ${parsed.proposalId}`);
+      }
+      if (!project.revisions.has(parsed.revisionId)) {
+        throw new Error(`revision not found for integration: ${parsed.revisionId}`);
       }
       appendImmutable(
         project.integrations,
