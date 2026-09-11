@@ -19,6 +19,40 @@ Extraction proceeds behavior-preserving first. Product-specific improvements hap
 
 ## Shared vocabulary
 
+### Collaborative Manuscript Core
+
+The Collaborative Manuscript Core (CC1) is the shared, phase-agnostic lifecycle seam for a manuscript. The initial Core implementation is complete through Writing Engine issues #21–#27 and has been proven by two independent consumer fixtures without adding product-specific branches to production code.
+
+It owns only the collaboration and versioning semantics shared across writing products:
+
+- stable literary-node identity for manuscript / chapter / section / paragraph;
+- immutable content versions and explicit structural lineage;
+- semantic `ChangeSet` operations and a revision DAG;
+- `workspace` and preserved `variant` branches;
+- contributor, role, permission, assignment and task contracts;
+- `ContributionPolicy = direct | propose` independent of `human | agent` identity;
+- Proposal / Review / partial Integration;
+- stale/conflict detection and bounded reconciliation;
+- storage-agnostic persistence ports and materialized snapshots.
+
+The Core is deliberately phase-agnostic: the same contracts support a manuscript while it is being authored and later while it is edited. A Writing Engine may write directly in an authorized workspace, or it may be required to submit a Proposal for review. The policy is a governance decision, not a consequence of whether the contributor is human or agent.
+
+The Core does not own essay or fiction meaning. Product concepts cross the boundary only as opaque `DomainEntityRef { kind, id }` / provenance references. AutoEssay keeps Claim, Evidence, Citation, ContentRelation, DraftUnit and argumentative decisions. AutoFiction keeps Canon, StoryState, ReaderModel, NarrativeArc, SceneContract and related narrative semantics.
+
+Dependency direction is one-way:
+
+```text
+AutoEssay ----\
+               > Collaborative Manuscript Core
+AutoFiction --/
+
+Collaborative Manuscript Core -X-> AutoEssay / AutoFiction domain models
+```
+
+CC1 persistence preserves the domain DAG as authority. Snapshots are materialized projections for fast reads, not a second source of truth. Because two branches can independently produce the same local content ordinal (for example `p-1@2`) with different text, persistence resolves content versions in revision context and follows first-parent manuscript-state inheritance; complete history/provenance traversal still follows the full DAG.
+
+After the shared proof, product adoption proceeds by compatibility seams rather than migration. The first real consumer integration is AutoEssay #168: pin the exact Writing Engine commit and project the existing AutoEssay manuscript into CC1 while leaving current AutoEssay persistence, writers, importers and revision workflows canonical.
+
 ### Litcraft
 
 The shared style-observation and style-effect infrastructure. Litcraft describes observable writing mechanisms rather than adjective-only style profiles. It records provenance, situated operations, transformations and evaluated effects while preserving author governance.
