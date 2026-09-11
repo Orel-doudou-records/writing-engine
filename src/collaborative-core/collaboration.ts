@@ -252,7 +252,10 @@ export function authorizeContribution(
   };
 }
 
-export type CommitDirectContributionInput = AuthorizeContributionInput & {
+export type CommitDirectContributionInput = Omit<
+  AuthorizeContributionInput,
+  "projectId"
+> & {
   graph: RevisionGraph;
   manuscript: LiteraryManuscript;
   branchId: string;
@@ -266,7 +269,15 @@ export type CommitDirectContributionInput = AuthorizeContributionInput & {
 export function commitDirectContribution(
   input: CommitDirectContributionInput
 ): CommitChangeSetResult {
-  const authorization = authorizeContribution(input);
+  const authorization = authorizeContribution({
+    policy: input.policy,
+    contributor: input.contributor,
+    roleBinding: input.roleBinding,
+    permissionGrants: input.permissionGrants,
+    projectId: input.graph.projectId,
+    operation: input.operation,
+    scope: input.scope,
+  });
   if (!authorization.authorized) {
     throw new Error("contribution requires permission");
   }
