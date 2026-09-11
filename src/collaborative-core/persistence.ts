@@ -56,10 +56,15 @@ export interface CollaborativeCoreStore {
   loadChangeSet(projectId: string, changeSetId: string): Promise<ChangeSet | undefined>;
   resolveContentVersion(
     projectId: string,
+    revisionId: string,
     nodeId: string,
     version: number
   ): Promise<ContentVersion | undefined>;
-  appendContentVersions(projectId: string, versions: ContentVersion[]): Promise<void>;
+  appendContentVersions(
+    projectId: string,
+    revisionId: string,
+    versions: ContentVersion[]
+  ): Promise<void>;
   appendChangeSet(projectId: string, changeSet: ChangeSet): Promise<void>;
   appendRevision(projectId: string, revision: Revision): Promise<void>;
   createBranch(projectId: string, branch: WorkBranch): Promise<void>;
@@ -81,7 +86,7 @@ export interface CollaborativeCoreStore {
   loadProposal(projectId: string, proposalId: string): Promise<Proposal | undefined>;
   appendReviewDecisions(projectId: string, decisions: ReviewDecision[]): Promise<void>;
   loadReviewDecisions(projectId: string, proposalId: string): Promise<ReviewDecision[]>;
-  saveIntegration(integration: Integration): Promise<void>;
+  saveIntegration(projectId: string, integration: Integration): Promise<void>;
   loadIntegration(
     projectId: string,
     integrationId: string
@@ -127,7 +132,11 @@ export async function persistCommit(
     });
   }
 
-  await store.appendContentVersions(input.projectId, input.commit.contentVersions);
+  await store.appendContentVersions(
+    input.projectId,
+    revision.id,
+    input.commit.contentVersions
+  );
   await store.appendChangeSet(input.projectId, changeSet);
   await store.appendRevision(input.projectId, revision);
   await store.advanceBranchHead({
@@ -165,8 +174,12 @@ function sameValue(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function contentVersionKey(nodeId: string, version: number): string {
-  return `${nodeId}:${version}`;
+function contentVersionKey(
+  revisionId: string,
+  nodeId: string,
+  version: number
+): string {
+  return `${revisionId}:${nodeId}:${version}`;
 }
 
 function reviewDecisionKey(proposalId: string, decisionId: string): string {
@@ -210,6 +223,26 @@ function appendImmutable<T>(
   }
 }
 
+function walkAncestors(project: ProjectState, revisionId: string): string[] {
+  const revision = project.revisions.get(revisionId);
+  if (revision === undefined) {
+    throw new Error(`revision not found: ${revisionId}`);
+  }
+
+  const result: string[] = [];
+  const seen = new Set<string>();
+  const queue = [...revision.parentIds];
+  while (queue.length > 0) {
+    const parentId = queue.shift()!;
+    if (seen.has(parentId)) continue;
+    seen.add(parentId);
+    result.push(parentId);
+    const parent = project.revisions.get(parentId);
+    if (parent !== undefined) queue.push(...parent.parentIds);
+  }
+  return result;
+}
+
 export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
   const projects = new Map<string, ProjectState>();
 
@@ -222,13 +255,9 @@ export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
       }
 
       const canonical = graph.branches[graph.canonicalBranchId];
-      if (canonical === undefined) {
-        throw new Error("canonical branch not found");
-      }
+      if (canonical === undefined) throw new Error("canonical branch not found");
       const canonicalRevision = graph.revisions[canonical.headRevisionId];
-      if (canonicalRevision === undefined) {
-        throw new Error("canonical revision not found");
-      }
+      if (canonicalRevision === undefined) throw new Error("canonical revision not found");
 
       const project: ProjectState = {
         canonicalBranchId: graph.canonicalBranchId,
@@ -249,13 +278,13 @@ export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
         integrations: new Map(),
       };
 
-      for (const version of input.contentVersions ?? []) {
-        const parsed = ContentVersionSchema.parse(version);
+      for (const value of input.contentVersions ?? []) {
+        const parsed = ContentVersionSchema.parse(value);
         appendImmutable(
           project.contentVersions,
-          contentVersionKey(parsed.nodeId, parsed.version),
+          contentVersionKey(canonical.headRevisionId, parsed.nodeId, parsed.version),
           parsed,
-          `immutable content version conflict: ${parsed.nodeId}@${parsed.version}`
+          `immutable content version conflict: ${canonical.headRevisionId}:${parsed.nodeId}@${parsed.version}`
         );
       }
 
@@ -275,32 +304,38 @@ export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
     },
 
     async loadRevision(projectId, revisionId) {
-      const project = projects.get(projectId);
-      const revision = project?.revisions.get(revisionId);
+      const revision = projects.get(projectId)?.revisions.get(revisionId);
       return revision === undefined ? undefined : clone(revision);
     },
 
     async loadChangeSet(projectId, changeSetId) {
-      const project = projects.get(projectId);
-      const changeSet = project?.changeSets.get(changeSetId);
+      const changeSet = projects.get(projectId)?.changeSets.get(changeSetId);
       return changeSet === undefined ? undefined : clone(changeSet);
     },
 
-    async resolveContentVersion(projectId, nodeId, version) {
+    async resolveContentVersion(projectId, revisionId, nodeId, version) {
       const project = projects.get(projectId);
-      const content = project?.contentVersions.get(contentVersionKey(nodeId, version));
-      return content === undefined ? undefined : clone(content);
+      if (project === undefined) return undefined;
+      if (!project.revisions.has(revisionId)) return undefined;
+
+      for (const candidateRevisionId of [revisionId, ...walkAncestors(project, revisionId)]) {
+        const content = project.contentVersions.get(
+          contentVersionKey(candidateRevisionId, nodeId, version)
+        );
+        if (content !== undefined) return clone(content);
+      }
+      return undefined;
     },
 
-    async appendContentVersions(projectId, versions) {
+    async appendContentVersions(projectId, revisionId, versions) {
       const project = requireProject(projects, projectId);
       for (const value of versions) {
         const parsed = ContentVersionSchema.parse(value);
         appendImmutable(
           project.contentVersions,
-          contentVersionKey(parsed.nodeId, parsed.version),
+          contentVersionKey(revisionId, parsed.nodeId, parsed.version),
           parsed,
-          `immutable content version conflict: ${parsed.nodeId}@${parsed.version}`
+          `immutable content version conflict: ${revisionId}:${parsed.nodeId}@${parsed.version}`
         );
       }
     },
@@ -360,9 +395,7 @@ export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
     async advanceBranchHead(input) {
       const project = requireProject(projects, input.projectId);
       const branch = project.branches.get(input.branchId);
-      if (branch === undefined) {
-        throw new Error(`branch not found: ${input.branchId}`);
-      }
+      if (branch === undefined) throw new Error(`branch not found: ${input.branchId}`);
       if (branch.headRevisionId !== input.expectedHeadRevisionId) {
         throw new Error(
           `branch head mismatch: expected ${input.expectedHeadRevisionId}, got ${branch.headRevisionId}`
@@ -387,22 +420,7 @@ export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
     },
 
     async walkRevisionAncestors(projectId, revisionId) {
-      const project = requireProject(projects, projectId);
-      if (!project.revisions.has(revisionId)) {
-        throw new Error(`revision not found: ${revisionId}`);
-      }
-      const result: string[] = [];
-      const seen = new Set<string>();
-      const queue = [...(project.revisions.get(revisionId)?.parentIds ?? [])];
-      while (queue.length > 0) {
-        const parentId = queue.shift()!;
-        if (seen.has(parentId)) continue;
-        seen.add(parentId);
-        result.push(parentId);
-        const parent = project.revisions.get(parentId);
-        if (parent !== undefined) queue.push(...parent.parentIds);
-      }
-      return result;
+      return walkAncestors(requireProject(projects, projectId), revisionId);
     },
 
     async materializeSnapshot(snapshot) {
@@ -415,8 +433,7 @@ export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
     },
 
     async loadSnapshot(projectId, revisionId) {
-      const project = projects.get(projectId);
-      const snapshot = project?.snapshots.get(revisionId);
+      const snapshot = projects.get(projectId)?.snapshots.get(revisionId);
       return snapshot === undefined ? undefined : clone(snapshot);
     },
 
@@ -429,32 +446,27 @@ export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
     },
 
     async loadManuscriptAtRevision(projectId, revisionId) {
-      const project = projects.get(projectId);
-      const snapshot = project?.snapshots.get(revisionId);
+      const snapshot = projects.get(projectId)?.snapshots.get(revisionId);
       return snapshot === undefined ? undefined : clone(snapshot.manuscript);
     },
 
     async saveTask(task) {
       const parsed = TaskSchema.parse(task);
-      const project = requireProject(projects, parsed.projectId);
-      project.tasks.set(parsed.id, clone(parsed));
+      requireProject(projects, parsed.projectId).tasks.set(parsed.id, clone(parsed));
     },
 
     async loadTask(projectId, taskId) {
-      const project = projects.get(projectId);
-      const task = project?.tasks.get(taskId);
+      const task = projects.get(projectId)?.tasks.get(taskId);
       return task === undefined ? undefined : clone(task);
     },
 
     async saveProposal(proposal) {
       const parsed = ProposalSchema.parse(proposal);
-      const project = requireProject(projects, parsed.projectId);
-      project.proposals.set(parsed.id, clone(parsed));
+      requireProject(projects, parsed.projectId).proposals.set(parsed.id, clone(parsed));
     },
 
     async loadProposal(projectId, proposalId) {
-      const project = projects.get(projectId);
-      const proposal = project?.proposals.get(proposalId);
+      const proposal = projects.get(projectId)?.proposals.get(proposalId);
       return proposal === undefined ? undefined : clone(proposal);
     },
 
@@ -479,15 +491,12 @@ export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
         .map((decision) => clone(decision));
     },
 
-    async saveIntegration(integration) {
+    async saveIntegration(projectId, integration) {
+      const project = requireProject(projects, projectId);
       const parsed = IntegrationSchema.parse(integration);
-      const proposalProjectId = [...projects.entries()].find(([, project]) =>
-        project.proposals.has(parsed.proposalId)
-      )?.[0];
-      if (proposalProjectId === undefined) {
+      if (!project.proposals.has(parsed.proposalId)) {
         throw new Error(`proposal not found for integration: ${parsed.proposalId}`);
       }
-      const project = requireProject(projects, proposalProjectId);
       appendImmutable(
         project.integrations,
         parsed.id,
@@ -497,8 +506,7 @@ export function createInMemoryCollaborativeCoreStore(): CollaborativeCoreStore {
     },
 
     async loadIntegration(projectId, integrationId) {
-      const project = projects.get(projectId);
-      const integration = project?.integrations.get(integrationId);
+      const integration = projects.get(projectId)?.integrations.get(integrationId);
       return integration === undefined ? undefined : clone(integration);
     },
   };
