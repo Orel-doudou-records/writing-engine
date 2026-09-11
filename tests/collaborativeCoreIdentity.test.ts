@@ -27,10 +27,14 @@ describe("Collaborative Manuscript Core identity", () => {
       id: "p1",
       kind: "paragraph",
       parentId: "c1",
+      domainRefs: [{ kind: "consumer-specific-concept", id: "domain-1" }],
     });
 
     expect(manuscript.nodes.c1?.childIds).toEqual(["p1"]);
     expect(manuscript.nodes.p1?.kind).toBe("paragraph");
+    expect(manuscript.nodes.p1?.domainRefs).toEqual([
+      { kind: "consumer-specific-concept", id: "domain-1" },
+    ]);
     expect(() =>
       insertLiteraryNode(manuscript, {
         id: "s1",
@@ -41,15 +45,27 @@ describe("Collaborative Manuscript Core identity", () => {
   });
 
   it("keeps domain references opaque and validates fine-grained scopes", () => {
-    expect(DomainEntityRefSchema.parse({ kind: "claim", id: "claim-1" })).toEqual({
+    expect(
+      DomainEntityRefSchema.parse({ kind: "claim", id: "claim-1" })
+    ).toEqual({
       kind: "claim",
       id: "claim-1",
     });
-    expect(LiteraryScopeSchema.parse({ nodeId: "p1", range: { start: 4, end: 9 } })).toEqual({
+    expect(
+      LiteraryScopeSchema.parse({
+        nodeId: "p1",
+        range: { start: 4, end: 9 },
+      })
+    ).toEqual({
       nodeId: "p1",
       range: { start: 4, end: 9 },
     });
-    expect(() => LiteraryScopeSchema.parse({ nodeId: "p1", range: { start: 9, end: 4 } })).toThrow();
+    expect(() =>
+      LiteraryScopeSchema.parse({
+        nodeId: "p1",
+        range: { start: 9, end: 4 },
+      })
+    ).toThrow();
   });
 
   it("rewrites content without changing node identity or historical versions", () => {
@@ -78,18 +94,37 @@ describe("Collaborative Manuscript Core identity", () => {
 
     expect(result.manuscript.nodes.p1?.id).toBe("p1");
     expect(result.contentVersion.version).toBe(2);
-    expect(result.manuscript.nodes.p1?.contentRef).toEqual({ nodeId: "p1", version: 2 });
+    expect(result.contentVersion.contentHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(result.manuscript.nodes.p1?.contentRef).toEqual({
+      nodeId: "p1",
+      version: 2,
+    });
     expect(v1.content).toBe("First draft");
     expect(ContentVersionSchema.parse(v1)).toEqual(v1);
   });
 
   it("moves a node while keeping its identity", () => {
     let manuscript = createLiteraryManuscript({ id: "m1" });
-    manuscript = insertLiteraryNode(manuscript, { id: "c1", kind: "chapter", parentId: "m1" });
-    manuscript = insertLiteraryNode(manuscript, { id: "c2", kind: "chapter", parentId: "m1" });
-    manuscript = insertLiteraryNode(manuscript, { id: "p1", kind: "paragraph", parentId: "c1" });
+    manuscript = insertLiteraryNode(manuscript, {
+      id: "c1",
+      kind: "chapter",
+      parentId: "m1",
+    });
+    manuscript = insertLiteraryNode(manuscript, {
+      id: "c2",
+      kind: "chapter",
+      parentId: "m1",
+    });
+    manuscript = insertLiteraryNode(manuscript, {
+      id: "p1",
+      kind: "paragraph",
+      parentId: "c1",
+    });
 
-    const moved = moveLiteraryNode(manuscript, { nodeId: "p1", parentId: "c2" });
+    const moved = moveLiteraryNode(manuscript, {
+      nodeId: "p1",
+      parentId: "c2",
+    });
 
     expect(moved.nodes.p1?.id).toBe("p1");
     expect(moved.nodes.p1?.parentId).toBe("c2");
@@ -99,7 +134,11 @@ describe("Collaborative Manuscript Core identity", () => {
 
   it("splits a leaf into new identities with explicit lineage", () => {
     let manuscript = createLiteraryManuscript({ id: "m1" });
-    manuscript = insertLiteraryNode(manuscript, { id: "p1", kind: "paragraph", parentId: "m1" });
+    manuscript = insertLiteraryNode(manuscript, {
+      id: "p1",
+      kind: "paragraph",
+      parentId: "m1",
+    });
 
     const split = splitLiteraryNode(manuscript, {
       nodeId: "p1",
@@ -117,8 +156,16 @@ describe("Collaborative Manuscript Core identity", () => {
 
   it("merges sibling leaves into a new identity with all origins", () => {
     let manuscript = createLiteraryManuscript({ id: "m1" });
-    manuscript = insertLiteraryNode(manuscript, { id: "p1", kind: "paragraph", parentId: "m1" });
-    manuscript = insertLiteraryNode(manuscript, { id: "p2", kind: "paragraph", parentId: "m1" });
+    manuscript = insertLiteraryNode(manuscript, {
+      id: "p1",
+      kind: "paragraph",
+      parentId: "m1",
+    });
+    manuscript = insertLiteraryNode(manuscript, {
+      id: "p2",
+      kind: "paragraph",
+      parentId: "m1",
+    });
 
     const merged = mergeLiteraryNodes(manuscript, {
       nodeIds: ["p1", "p2"],
@@ -133,11 +180,17 @@ describe("Collaborative Manuscript Core identity", () => {
 
   it("logically removes a node while keeping historical identity addressable", () => {
     let manuscript = createLiteraryManuscript({ id: "m1" });
-    manuscript = insertLiteraryNode(manuscript, { id: "p1", kind: "paragraph", parentId: "m1" });
+    manuscript = insertLiteraryNode(manuscript, {
+      id: "p1",
+      kind: "paragraph",
+      parentId: "m1",
+    });
 
     const removed = removeLiteraryNode(manuscript, "p1");
 
     expect(removed.nodes.m1?.childIds).toEqual([]);
-    expect(removed.nodes.p1).toEqual(expect.objectContaining({ id: "p1", removed: true }));
+    expect(removed.nodes.p1).toEqual(
+      expect.objectContaining({ id: "p1", removed: true })
+    );
   });
 });
