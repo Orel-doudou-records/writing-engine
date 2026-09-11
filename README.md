@@ -11,6 +11,26 @@ Initial consumers:
 
 ## Current foundations
 
+### Collaborative Manuscript Core
+
+The Collaborative Manuscript Core is the phase-agnostic lifecycle seam shared by writing products. It owns literary-node identity, content revisions, workspaces and variants, contribution policies, tasks, proposals, reviews, integrations, conflict checks and storage ports.
+
+The same contracts support authoring-in-progress and later editorial collaboration. A consumer may write directly in an authorized workspace or require `Proposal -> Review -> Integration`; the Core does not infer that policy from whether the contributor is a human or an agent.
+
+Product semantics stay outside the Core. Consumers attach opaque `DomainEntityRef { kind, id }` values such as claim-like or scene-like references, but Writing Engine never interprets those kinds and never imports product-domain types.
+
+Dependency direction is one-way:
+
+```text
+AutoEssay ----\
+               > Collaborative Manuscript Core
+AutoFiction --/
+
+Collaborative Manuscript Core -X-> AutoEssay / AutoFiction domain models
+```
+
+Contract fixtures under `tests/fixtures/` prove both an essay-style direct-writing consumer and a fiction-style proposal/review consumer against the same public APIs. They are deliberately tiny proofs of the shared seam, not product-domain implementations.
+
 ### Diffract
 
 A minimal domain-neutral Diffract core lets consumers project their own objects into generic context blocks and receive a structured four-pass reading with an explicit cut, tradeoffs, verdict and validated generic impacts.
