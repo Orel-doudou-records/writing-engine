@@ -25,6 +25,7 @@ export {
 } from "./collaborative-core/proposal.js";
 export * from "./collaborative-core/conflicts.js";
 export * from "./collaborative-core/persistence.js";
+export * from "./collaborative-core/translation.js";
 export * from "./diffract/index.js";
 export * from "./litcraft/index.js";
 export * from "./lunette-ronde/index.js";
