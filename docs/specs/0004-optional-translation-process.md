@@ -6,7 +6,7 @@ The owner clarified the scope on 2026-09-19: « Reste général c’est un proce
 
 Translation is an explicitly invoked, domain-neutral process over CC1. Languages, literary genre, roles, translation providers and user interfaces belong to consumers. Nothing runs automatically. Existing consumers behave identically when they do not call this API. The bilingual workshop is one possible application; this change does not modify that application.
 
-The repository requires two real consumers before adopting a shared primitive. No two real translation consumers have been demonstrated. This branch is a reviewable implementation proposal, to remain a draft pending that adoption gate. Executable examples demonstrate contracts, not production adoption; this spec does not amend the rule.
+The owner accepted this as an incubating capability in Writing Engine on 2026-09-21. Inclusion in the package does not activate it: each consumer project must explicitly call the API and supply its own policy, authorization and persistence. Existing consumers remain unchanged. The two-real-consumer rule still governs promotion from incubating capability to proven shared primitive; examples demonstrate contracts rather than production adoption.
 
 ## Contracts
 

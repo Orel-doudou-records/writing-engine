@@ -1,6 +1,6 @@
 # Optional translation process
 
-Status: draft implementation proposal. The repository's two-real-consumer adoption gate is not yet satisfied. These contracts are available on this branch for review, not an assertion of production adoption by AutoEssay or AutoFiction.
+Status: accepted incubating capability. It is available to consumer projects but dormant unless a project explicitly invokes it. Availability is not production adoption by AutoEssay, AutoFiction or any other consumer.
 
 Translation is an optional CC1 process. A consumer calls it when a person or workflow requests a translation. Importing Writing Engine, opening a project or changing text does not start translation. There is no global enable switch, prescribed language pair, literary genre, translator role, provider or remote service.
 
@@ -56,6 +56,6 @@ node examples/optional-translation.mjs --translate
 
 The first invocation does no translation work. The second demonstrates a Portuguese-to-Arabic human contribution, review and integration using supplied text and the real in-memory CC1 store. It needs no network, credentials or provider. The store is an educational, single-process example, not a transactional production database.
 
-Tests also exercise a separate same-project French-to-Traditional-Chinese configuration, branch-local content-version collisions, direct contribution, per-node permissions, fresh review after source movement and partial integration. These examples are contract checks, not the two real consumers required for adoption.
+Tests also exercise a separate same-project French-to-Traditional-Chinese configuration, branch-local content-version collisions, direct contribution, per-node permissions, fresh review after source movement and partial integration. These examples are contract checks, not evidence of two production adopters.
 
-Existing consumers need no code or configuration change. If a consumer adopts this draft after the repository gate is resolved, pin the reviewed Writing Engine commit as required by ADR 0004.
+Existing consumers need no code or configuration change. A project that chooses to activate translation pins the reviewed Writing Engine commit as required by ADR 0004, imports the translation API and owns the request trigger, authorization, storage transaction and interface. A project that does none of those remains unaffected.

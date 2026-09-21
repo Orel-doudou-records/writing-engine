@@ -2,11 +2,15 @@
 
 Date: 2026-09-19. Baseline: `36a3bcd04381890d3a4cd738832b1a278b786fb0`. Implementation reviewed: `98331c4` (`feat: add opt-in translation process over collaborative core`). Two independent review agents inspected the diff; the implementation agent ran the checks below.
 
+## Owner decision after review
+
+On 2026-09-21 the owner authorized merging the capability into Writing Engine with one explicit condition: activation remains optional per consumer project. ADR 0005 records this incubating status. The code reviewed below already satisfies the condition because it performs no work, persistence or branch advance until a consumer calls its functions and persists returned values.
+
 ## Standards
 
 No blocking correction identified for a draft proposal. Shared semantics, existing CC1 lifecycle, per-node contribution permissions, revision-aware source provenance and conflict-aware integration are preserved. No product-domain types, fixed language pair, mandatory business role or provider enter the module. ADR 0004 distribution remains unchanged.
 
-The two-real-consumer rule remains an adoption blocker: no such translation adoption is demonstrated. Tests and examples are explicitly contract demonstrations. The PR must remain a draft until this requirement is satisfied; this review does not authorize an exception or a merge.
+The initial review identified the two-real-consumer rule as an adoption blocker. The later owner decision permits merge as a dormant incubating capability, not promotion to a proven shared primitive. Tests and examples remain contract demonstrations.
 
 No smell-driven refactor requested. The local recursive freeze helper follows existing repository practice; extracting a cross-module abstraction is not justified by this change.
 
@@ -16,7 +20,7 @@ No missing/partial requirement, scope creep or functional blocker identified. Th
 
 One P3 documentation finding: source-head movement produces `stale` before the function checks for missing pinned snapshots/content. The guide now states that precedence explicitly. This is a documentation correction, with no implementation change after the independent reviews.
 
-Findings: Standards 0 code corrections, with the adoption gate still open; Spec 1 minor documentation finding, corrected.
+Findings: Standards 0 code corrections; Spec 1 minor documentation finding, corrected. The owner’s later opt-in merge decision changes status, not the reviewed implementation.
 
 ## Validation
 
