@@ -31,6 +31,8 @@ Collaborative Manuscript Core -X-> AutoEssay / AutoFiction domain models
 
 Contract fixtures under `tests/fixtures/` prove both an essay-style direct-writing consumer and a fiction-style proposal/review consumer against the same public APIs. They are deliberately tiny proofs of the shared seam, not product-domain implementations.
 
+An [optional translation process](docs/optional-translation.md) composes CC1 requests, contribution policies and reviewed integrations. It is explicitly invoked, language-configurable and provider-independent. Each consumer project decides whether to call it; importing Writing Engine never activates translation. The [executable example](examples/optional-translation.mjs) demonstrates both the inactive and invoked paths.
+
 ### Diffract
 
 A minimal domain-neutral Diffract core lets consumers project their own objects into generic context blocks and receive a structured four-pass reading with an explicit cut, tradeoffs, verdict and validated generic impacts.

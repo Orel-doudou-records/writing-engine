@@ -13,7 +13,9 @@ Neither consumer depends conceptually on the other. Both may depend on Writing E
 
 ## Extraction rule
 
-A primitive belongs here only when at least two real consumers use it with the same semantics. Shared-looking names are not enough.
+A stable shared primitive belongs here only when at least two real consumers use it with the same semantics. Shared-looking names are not enough.
+
+An owner-approved incubating capability may live in `main` before that threshold only when it is dormant by default, changes no existing consumer and remains explicitly invoked under consumer-owned policy. Its presence in the package is not activation or proof of shared adoption. Translation is the first such capability; see ADR 0005.
 
 Extraction proceeds behavior-preserving first. Product-specific improvements happen in the owning product or through explicit extension points after the shared seam is stable.
 
